@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "finalproject-krylasov-leonid-m25-555"
+version = "0.1.0"
+description = "Платформа для отслеживания и симуляции торговли валютами"
+authors = ["Leonid <leonid6011@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "valutatrade_hub" }
+]
+ 
+[tool.poetry.dependencies]
+python = "^3.12"
+prompt = "^0.4.1"
+prettytable = "^3.17.0"
+
+[tool.poetry.scripts]
+project = "wallet_app.main:main"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.14.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+exclude = ["venv", ".venv", "dist", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = []
