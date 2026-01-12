@@ -12,9 +12,10 @@ packages = [
 python = "^3.12"
 prompt = "^0.4.1"
 prettytable = "^3.17.0"
+requests = "^2.32.5"
 
 [tool.poetry.scripts]
-project = "wallet_app.main:main"
+project = "valutatrade_hub.cli.interface:run_cli"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14.4"
@@ -31,3 +32,9 @@ exclude = ["venv", ".venv", "dist", "__pycache__"]
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 ignore = []
+
+[tool.valutatrade]
+data_dir = "data"
+rates_ttl_seconds = 300
+base_currency = "USD"
+log_file = "logs/app.log"

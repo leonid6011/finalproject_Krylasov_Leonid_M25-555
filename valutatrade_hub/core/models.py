@@ -1,6 +1,8 @@
 import hashlib
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
+
+from valutatrade_hub.core.exceptions import InsufficientFundsError
 
 
 class User:
@@ -24,7 +26,7 @@ class User:
         else:
             self._registration_date = registration_date
         
-    # Геттеры
+    #геттеры
     @property
     def user_id(self) -> int:
         return self._user_id
@@ -37,14 +39,14 @@ class User:
     def registration_date(self) -> datetime:
         return self._registration_date
         
-    # Сеттеры
+    #сеттеры
     @username.setter
     def username(self, value: str) -> None:
         if not value.strip():
             raise ValueError("Имя пользователя не может быть пустым.")
         self._username = value
 
-    # Методы
+    #методы
     def get_user_info(self) -> dict:
         """
         Возвращает информацию о пользователе без пароля.
@@ -60,9 +62,22 @@ class User:
         Проверяет правильность введеного пароля.
         """
         hashed = hashlib.sha256((password + self._salt).encode()).hexdigest()
-        self._hashed_password = new_hash
+        return hashed == self._hashed_password
+    
+    def change_password(self, new_password: str) -> None:
+        """
+        Меняет пароль пользователя с хешированием.
+        """
+        if not isinstance(new_password, str) or len(new_password) < 4:
+            raise ValueError("Пароль должен быть не короче 4 символов.")
+
+        self._hashed_password = hashlib.sha256(
+            (new_password + self._salt).encode()
+        ).hexdigest()
+
+
         
-    # JSON
+    #JSON
     def to_dict(self) -> dict:
         """
         """
@@ -76,17 +91,20 @@ class User:
 
 class Wallet:
     """
-    Кошелек пользователя для одой конкретной валюты
+    Кошелек пользователя для одной конкретной валюты
     """
+    
     def __init__(self, currency_code: str, balance: float = 0.0) -> None:
-        self.currency_code = currency_code.upper()
-        self._balance = 0.0
-        self.balance = balance #через сеттер с валидацией
+        self.currency_code = currency_code.strip().upper()
+        self._balance: float = 0.0
+        self.balance = balance
 
+    #геттеры
     @property
     def balance(self) -> float:
         return self._balance
-    
+
+    #сеттеры
     @balance.setter
     def balance(self, value: float) -> None:
         if not isinstance(value, (int, float)):
@@ -94,8 +112,8 @@ class Wallet:
         if value < 0:
             raise ValueError("Баланс не может быть отрицательным.")
         self._balance = float(value)
-    
-    # Методы
+
+    #методы
     def deposit(self, amount: float) -> None:
         """
         Пополнение баланса
@@ -103,7 +121,7 @@ class Wallet:
         if not isinstance(amount, (int, float)):
             raise TypeError("Сумма пополнения должна быть числом.")
         if amount <= 0:
-            raise ValueError("Сумма пополнений должна быть положительной.")
+            raise ValueError("Сумма пополнения должна быть положительной.")
         self._balance += float(amount)
 
     def withdraw(self, amount: float) -> None:
@@ -114,38 +132,43 @@ class Wallet:
             raise TypeError("Сумма снятия должна быть числом.")
         if amount <= 0:
             raise ValueError("Сумма снятия должна быть положительной.")
+
         if amount > self._balance:
-            raise ValueError("На балансе недостаточно средств.")
+            raise InsufficientFundsError(available=self._balance, 
+                                         required=float(amount), 
+                                         code=self.currency_code,)
+
         self._balance -= float(amount)
 
-    def get_blance_info(self) -> dict:
+    def get_balance_info(self) -> dict:
         """
         Информация о текущем балансе в этой валюте.
         """
         return {
             "currency_code": self.currency_code,
-            "balance": self._balance
+            "balance": self._balance,
         }
-    
+
     # JSON
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """
         Представление кошелька для записи в JSON.
         """
         return {
             "currency_code": self.currency_code,
-            "balance": self._balance
+            "balance": self._balance,
         }
-    
+
     @classmethod
-    def from_dict(cls, data:dict) -> "Wallet":
+    def from_dict(cls, data: Dict[str, Any]) -> "Wallet":
         """
-        Создает кошелек из словоря (из JSON).
+        Создает кошелек из словаря (из JSON).
         """
         return cls(
-            currency_code = data.get("currency_code"),
-            balance = float(data.get("balance", 0.0))
+            currency_code=str(data.get("currency_code", "")).upper(),
+            balance=float(data.get("balance", 0.0)),
         )
+
     
 class Portfolio:
     """
@@ -160,12 +183,13 @@ class Portfolio:
         self._user_id = user.user_id
         self._wallets: Dict[str, Wallet] = wallets or {}
 
+    #геттеры
     @property
     def user(self) -> User:
         """
-        Объект пользователя (бкз возможности перезаписи).
+        Объект пользователя (без возможности перезаписи).
         """
-        return self.user
+        return self._user
     
     @property
     def user_id(self) -> int:
@@ -175,23 +199,26 @@ class Portfolio:
         return self._user_id
     
     @property
-    def  wallets(self) -> Dict[str, Wallet]:
+    def wallets(self) -> Dict[str, Wallet]:
         """
         Копия словаря кошельков
         """
         return self._wallets.copy()
     
-    # Методы
+    #методы
     def add_currency(self, currency_code: str) -> Wallet:
         """
-        Добавляем новый кошелек в портфель.
+        Добавляет новый кошелёк в портфель.
         """
         code = currency_code.upper()
+
         if code in self._wallets:
             raise ValueError(f"Кошелек для валюты {code} уже существует.")
-        Wallet = Wallet(currency_code = code)
-        self._wallets[code] = Wallet
-        return Wallet
+
+        wallet = Wallet(currency_code=code)
+        self._wallets[code] = wallet
+        return wallet
+
     
     def get_wallet(self, currency_code: str) -> Wallet:
         """
@@ -204,33 +231,34 @@ class Portfolio:
             raise KeyError(f"Кошелек для валюты {code} не найден.") from exc
         
     def get_total_value(
-            self,
-            base_currency: str = "USD",
-            exchange_rates: Optional[Dict[str, float]] = None
+        self,
+        base_currency: str = "USD",
+        exchange_rates: Optional[Dict[str, float]] = None,
     ) -> float:
         """
-        Возвращает общую тоимость всех валют в указанной базовой валюте.
+        Возвращает общую стоимость всех валют пользователя в указанной базовой валюте.
         """
         base = base_currency.upper()
-        # времннная заглушка
-        default_rates = {
+
+        #курсы валют, стоимость 1 единицы валюты в USD
+        rates = exchange_rates or {
             "USD": 1.0,
             "EUR": 1.1,
-            "BTC": 90000.0
+            "BTC": 90_000.0,
         }
-        rates = exchange_rates or default_rates
 
         if base not in rates:
-            #базовая валюта должна быть описана в словаре
-            rates = rates.copy()
-            rates[base] = 1.0
+            raise KeyError(f"Нет курса для базовой валюты {base}")
 
-        total = 0.0
+        #считаем общую стоимость в USD
+        total_usd = 0.0
         for code, wallet in self._wallets.items():
             if code not in rates:
-                raise KeyError(f"Нет курса для валюты {code}.")
-            total += wallet.balance * rates[code]
-        return total
+                raise KeyError(f"Нет курса для валюты {code}")
+            total_usd += wallet.balance * rates[code]
+
+        #перевод из USD в базовую валюту
+        return total_usd / rates[base]
 
     # JSON
     def to_dict(self) -> dict:
@@ -244,7 +272,7 @@ class Portfolio:
            }
         }
 
-    @classsmethod
+    @classmethod
     def from_dict(cls, data: dict, user: User) -> "Portfolio":
         """
         Создает портфель из словаря (JSON) и объекта пользователя.

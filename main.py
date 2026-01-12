@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
+"""
+Точка входа в проект.
+"""
 
-"""
-Точка входа в проект
-"""
+from valutatrade_hub.cli.interface import run_cli
+
 
 def main() -> None:
-    """
-    Точка входа в приложение
-    """
+    run_cli()
+
 
 if __name__ == "__main__":
     main()
