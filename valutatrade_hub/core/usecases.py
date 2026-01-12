@@ -87,9 +87,17 @@ class WalletApp:
         self._db.save_users(users)
 
         portfolios = self._db.load_portfolios()
-        portfolios.append({"user_id": new_id, "wallets": {}})
-        self._db.save_portfolios(portfolios)
 
+        #получаем начальный баланс USD
+        settings = SettingsLoader()
+        initial_usd = float(settings.get("INITIAL_USD_BALANCE", 50000.0))
+
+        portfolios.append({
+            "user_id": new_id, 
+            "wallets": {"USD": initial_usd}
+        })
+        self._db.save_portfolios(portfolios)
+        
         return new_id
 
     @log_action("LOGIN", verbose=False)
