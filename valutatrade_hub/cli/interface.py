@@ -294,7 +294,6 @@ def run_cli() -> None:
         except CurrencyNotFoundError as e:
             print(f"Ошибка: {e}")
             print("Доступные валюты: USD, EUR, GBP, RUB, BTC, ETH, SOL")
-            print("Для справки используйте: help get-rate")
             continue
             
         except ApiRequestError as e:
