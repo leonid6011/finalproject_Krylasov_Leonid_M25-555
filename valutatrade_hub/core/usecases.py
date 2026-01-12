@@ -94,7 +94,12 @@ class WalletApp:
 
         portfolios.append({
             "user_id": new_id, 
-            "wallets": {"USD": initial_usd}
+            "wallets": {
+                "USD": {
+                    "currency_code": "USD",
+                    "balance": initial_usd
+                }
+            }
         })
         self._db.save_portfolios(portfolios)
         

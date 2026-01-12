@@ -280,8 +280,12 @@ class Portfolio:
         wallets_raw = data.get("wallets", {})
         wallets: Dict[str, Wallet] = {}
         for code, wallet_data in wallets_raw.items():
-            wallet_data = dict(wallet_data)
+            if isinstance(wallet_data, (int, float)):
+                wallet_data = {"balance": float(wallet_data)}
+            else:
+                wallet_data = dict(wallet_data)
+        
             wallet_data.setdefault("currency_code", code)
             wallets[code] = Wallet.from_dict(wallet_data)
-        
+    
         return cls(user=user, wallets=wallets)
