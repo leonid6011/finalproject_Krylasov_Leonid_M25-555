@@ -13,7 +13,7 @@ ValutaTrade Hub — это это комплексная платформа, к�
 1. Клонируйте репозиторий:
 ```bash
 git clone https://github.com/leonid6011/finalproject_Krylasov_Leonid_M25-555
-cd 
+cd finalproject_Krylasov_Leonid_M25-555
 ```
 
 2. Установите зависимости:
