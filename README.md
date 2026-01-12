@@ -36,7 +36,7 @@ poetry run project
 ```
 
 ## Демонстрация
-[![asciicast](https://asciinema.org/a/DgZbm2DHwxUoAnJ0.svg)](https://asciinema.org/a/DgZbm2DHwxUoAnJ0)
+[![asciicast](https://asciinema.org/a/o9wiLgfPcZonbDIS.svg)](https://asciinema.org/a/o9wiLgfPcZonbDIS)
 
 ## Структура проекта
 
